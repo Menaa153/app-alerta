@@ -1,7 +1,7 @@
 import express from "express";
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
 import cors from "cors";
+import dotenv from "dotenv";
+import brevo from "@getbrevo/brevo";
 
 dotenv.config();
 
@@ -9,33 +9,33 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false, // Debe ser false para el puerto 587
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Configurar cliente de Brevo API
+const defaultClient = brevo.ApiClient.instance;
+const apiKey = defaultClient.authentications["api-key"];
+apiKey.apiKey = process.env.BREVO_API_KEY;
 
-// Ruta para enviar alerta
+const apiInstance = new brevo.TransactionalEmailsApi();
+
+// Ruta de prueba
+app.get("/", (req, res) => res.send("Servidor activo"));
+
+// Ruta para enviar alertas
 app.post("/enviar-alerta", async (req, res) => {
   const { tipoAlerta, descripcion } = req.body;
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: process.env.DESTINATION_EMAIL,
-    subject: `🚨 Alerta: ${tipoAlerta}`,
-    text: `Descripción: ${descripcion}`,
+  const sendSmtpEmail = {
+    to: [{ email: process.env.DESTINATION_EMAIL, name: "Centro de Alertas" }],
+    sender: { email: "alertas@app-alerta.com", name: "App Alerta" },
+    subject: `Alerta: ${tipoAlerta}`,
+    textContent: `Descripción: ${descripcion}`,
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
     console.log("Correo enviado correctamente");
     res.status(200).json({ message: "Correo enviado correctamente" });
   } catch (error) {
-    console.error("Error al enviar correo:", error);
+    console.error("Error al enviar correo", error);
     res.status(500).json({ error: "Error al enviar correo" });
   }
 });
