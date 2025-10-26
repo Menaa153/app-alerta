@@ -1,49 +1,43 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
-
-import * as brevo from '@getbrevo/brevo';
-
-
-
+import * as brevo from "@getbrevo/brevo";
 
 dotenv.config();
-
 const app = express();
-app.use(cors());
+
 app.use(express.json());
 
-// ✅ Manejar import correctamente
-const brevo = brevoPkg;
+// Configurar Brevo
 const defaultClient = brevo.ApiClient.instance;
 const apiKey = defaultClient.authentications["api-key"];
 apiKey.apiKey = process.env.BREVO_API_KEY;
 
-const apiInstance = new brevo.TransactionalEmailsApi();
+// Endpoint de prueba
+app.get("/", (req, res) => {
+  res.send("Servidor funcionando correctamente 🚀");
+});
 
-// Ruta de prueba
-app.get("/", (req, res) => res.send("Servidor activo 🚀"));
-
-// Ruta para enviar alertas
-app.post("/enviar-alerta", async (req, res) => {
-  const { tipoAlerta, descripcion } = req.body;
-
-  const sendSmtpEmail = {
-    to: [{ email: process.env.DESTINATION_EMAIL, name: "Centro de Alertas" }],
-    sender: { email: "alertas@app-alerta.com", name: "App Alerta" },
-    subject: `🚨 Alerta: ${tipoAlerta}`,
-    textContent: `Descripción: ${descripcion}`,
-  };
-
+// Ejemplo de envío de correo
+app.post("/send-email", async (req, res) => {
   try {
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log("Correo enviado correctamente ✅");
-    res.status(200).json({ message: "Correo enviado correctamente" });
+    const { to, subject, message } = req.body;
+    const email = new brevo.SendSmtpEmail();
+
+    email.to = [{ email: to }];
+    email.sender = { email: "tu_correo@tudominio.com", name: "Alerta" };
+    email.subject = subject;
+    email.htmlContent = `<html><body><p>${message}</p></body></html>`;
+
+    const apiInstance = new brevo.TransactionalEmailsApi();
+    await apiInstance.sendTransacEmail(email);
+
+    res.status(200).json({ success: true, message: "Correo enviado" });
   } catch (error) {
-    console.error("Error al enviar correo ❌", error);
-    res.status(500).json({ error: "Error al enviar correo" });
+    console.error(error);
+    res.status(500).json({ success: false, error: "Error al enviar el correo" });
   }
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+// Puerto
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor escuchando en puerto ${PORT}`));
