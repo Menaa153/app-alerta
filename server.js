@@ -21,7 +21,7 @@ app.post("/send-email", async (req, res) => {
     const { to, subject, message } = req.body;
 
     const emailData = {
-      sender: { email: "99f054001@smtp-brevo.com", name: "Alerta" }, // 👈 usa tu correo verificado
+      sender: { email: "cristianimbacuan311@gmail.com", name: "Alerta" }, // 👈 usa tu correo verificado
       to: [{ email: to }],
       subject,
       htmlContent: `<html><body><p>${message}</p></body></html>`,
