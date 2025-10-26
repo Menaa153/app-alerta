@@ -10,32 +10,32 @@ app.use(express.json());
 const brevoClient = new Brevo.TransactionalEmailsApi();
 brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
-// Endpoint raíz para probar Render
+// Endpoint raíz
 app.get("/", (req, res) => {
   res.send("Servidor funcionando correctamente 🚀");
 });
 
-// Ejemplo para enviar correo
+// Endpoint para enviar correo
 app.post("/send-email", async (req, res) => {
   try {
     const { to, subject, message } = req.body;
 
     const emailData = {
-      sender: { email: "tu_correo@tudominio.com", name: "Alerta" },
+      sender: { email: "99f054001@smtp-brevo.com", name: "Alerta" }, // 👈 usa tu correo verificado
       to: [{ email: to }],
       subject,
       htmlContent: `<html><body><p>${message}</p></body></html>`,
     };
 
-    await brevoClient.sendTransacEmail(emailData);
+    const response = await brevoClient.sendTransacEmail(emailData);
 
+    console.log("Correo enviado ✅ ID:", response.messageId);
     res.status(200).json({ success: true, message: "Correo enviado exitosamente" });
   } catch (error) {
-    console.error("Error al enviar el correo:", error);
+    console.error("Error al enviar el correo ❌:", error);
     res.status(500).json({ success: false, error: "Fallo al enviar el correo" });
   }
 });
 
-// Puerto
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
