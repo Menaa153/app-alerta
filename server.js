@@ -1,43 +1,41 @@
 import express from "express";
 import dotenv from "dotenv";
-import * as brevo from "@getbrevo/brevo";
+import Brevo from "@getbrevo/brevo";
 
 dotenv.config();
 const app = express();
-
 app.use(express.json());
 
-// Configurar Brevo
-const defaultClient = brevo.ApiClient.instance;
-const apiKey = defaultClient.authentications["api-key"];
-apiKey.apiKey = process.env.BREVO_API_KEY;
+// Configurar la API de Brevo
+const brevoClient = new Brevo.TransactionalEmailsApi();
+brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
-// Endpoint de prueba
+// Endpoint raíz para probar Render
 app.get("/", (req, res) => {
   res.send("Servidor funcionando correctamente 🚀");
 });
 
-// Ejemplo de envío de correo
+// Ejemplo para enviar correo
 app.post("/send-email", async (req, res) => {
   try {
     const { to, subject, message } = req.body;
-    const email = new brevo.SendSmtpEmail();
 
-    email.to = [{ email: to }];
-    email.sender = { email: "tu_correo@tudominio.com", name: "Alerta" };
-    email.subject = subject;
-    email.htmlContent = `<html><body><p>${message}</p></body></html>`;
+    const emailData = {
+      sender: { email: "tu_correo@tudominio.com", name: "Alerta" },
+      to: [{ email: to }],
+      subject,
+      htmlContent: `<html><body><p>${message}</p></body></html>`,
+    };
 
-    const apiInstance = new brevo.TransactionalEmailsApi();
-    await apiInstance.sendTransacEmail(email);
+    await brevoClient.sendTransacEmail(emailData);
 
-    res.status(200).json({ success: true, message: "Correo enviado" });
+    res.status(200).json({ success: true, message: "Correo enviado exitosamente" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: "Error al enviar el correo" });
+    console.error("Error al enviar el correo:", error);
+    res.status(500).json({ success: false, error: "Fallo al enviar el correo" });
   }
 });
 
 // Puerto
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor escuchando en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
