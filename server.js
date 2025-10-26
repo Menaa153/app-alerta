@@ -1,7 +1,11 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import brevoPkg from "@getbrevo/brevo";
+
+import * as brevo from '@getbrevo/brevo';
+
+
+
 
 dotenv.config();
 
